@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoinEasy</title>
+<style>
+  body { font-family: Arial; margin:0; padding:0; background: linear-gradient(135deg, #e0f7fa, #ffffff);}
+  header { display:flex; align-items:center; padding:10px; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  #logo { display:flex; align-items:center; font-size:24px; font-weight:bold;}
+  #logo span.coin{ color:green;} #logo span.easy{ color:orange; margin-left:5px;}
+  #logo i{ margin-right:5px; color:#2196f3;}
+  main{ padding:15px;}
+  .page{ display:none;}
+  .card{ background:#fff; padding:15px; margin-bottom:15px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+  table{ width:100%; border-collapse: collapse;}
+  th,td{ padding:8px; border:1px solid #ddd; text-align:center;}
+  nav.bottom-nav{ display:none; position:fixed; bottom:0; left:0; right:0; height:50px; background:#fff; display:flex; justify-content:space-around; align-items:center; box-shadow:0 -2px 5px rgba(0,0,0,0.1);}
+  nav.bottom-nav button{ background:none; border:none; font-size:16px; cursor:pointer;}
+  input, select{ padding:5px; margin:5px 0; width:100%; box-sizing:border-box;}
+  button.confirm{ background:green; color:#fff; border:none; padding:8px; cursor:pointer; border-radius:5px;}
+  .wallet-links button{ margin:5px; padding:8px; border:none; border-radius:5px; cursor:pointer; background:#2196f3; color:#fff;}
+  .wallet-links button:hover{ background:#1976d2;}
+  .small-logo{width:25px; height:25px; display:inline-block; background:#2196f3; border-radius:50%; margin-right:5px;}
+  #receiptModal{ display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); justify-content:center; align-items:center;}
+  #receiptModal .modal-content{ background:#fff; padding:20px; border-radius:10px; width:90%; max-width:400px; white-space:pre-line;}
+</style>
+</head>
+<body>
+
+<header>
+  <div id="logo"><i class="btc-icon">₿</i><span class="coin">Coin</span><span class="easy">Easy</span></div>
+</header>
+
+<main>
+  <!-- Login / Signup Page -->
+  <div id="loginPage" class="page">
+    <h2>Login / Signup</h2>
+    <div>
+      <button onclick="showLogin()">Login</button>
+      <button onclick="showSignup()">Sign Up</button>
+    </div>
+    <div id="loginForm">
+      <h3>Login</h3>
+      <input type="email" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button class="confirm" onclick="login()">Login</button>
+    </div>
+    <div id="signupForm" style="display:none;">
+      <h3>Sign Up</h3>
+      <input type="text" id="signupName" placeholder="Name">
+      <input type="email" id="signupEmail" placeholder="Email">
+      <input type="password" id="signupPassword" placeholder="Password">
+      <input type="password" id="signupPasswordConfirm" placeholder="Confirm Password">
+      <button class="confirm" onclick="signup()">Sign Up</button>
+    </div>
+  </div>
+
+  <!-- Home Page -->
+  <div id="home" class="page">
+    <div class="card">
+      <h2>Welcome to CoinEasy</h2>
+      <p>Buy & sell crypto easily with KPay or Wallets.</p>
+    </div>
+    <div class="wallet-links">
+      <button onclick="openWallet('https://www.binance.com')">Binance</button>
+      <button onclick="openWallet('https://www.bitget.com')">Bitget</button>
+      <button onclick="openWallet('https://www.okx.com')">OKX</button>
+      <button onclick="openWallet('https://crypto.com')">Crypto.com</button>
+      <button onclick="openWallet('https://www.kraken.com')">Kraken</button>
+      <button onclick="openWallet('https://www.coinbase.com')">Coinbase</button>
+    </div>
+    <div>
+      <button onclick="openSupport()">Customer Support <span class="small-logo"></span></button>
+    </div>
+  </div>
+
+  <!-- Market Page -->
+  <div id="market" class="page">
+    <div class="card">
+      <h3>Market (BTC → MMK)</h3>
+      <button onclick="loadMarket()">Reload</button>
+      <table>
+        <thead><tr><th>Coin</th><th>Price (MMK)</th></tr></thead>
+        <tbody id="marketBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Buy -->
+    <div class="card">
+      <h3>Buy Crypto</h3>
+      <select id="buyCoin">
+        <option value="USDT">USDT</option>
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+      </select>
+      <select id="buyNetwork">
+        <option value="ERC20">ERC20</option>
+        <option value="TRC20">TRC20</option>
+        <option value="BEP20">BEP20</option>
+      </select>
+      <input type="number" id="buyAmount" placeholder="Amount in USDT">
+      <button class="confirm" onclick="showBuyConfirm()">Confirm</button>
+      <div id="buyConfirm" style="display:none;">
+        <p>KPay Info:</p>
+        <input type="text" value="Name: Tun Myint Oo" readonly>
+        <input type="text" value="Phone: 09673889038" readonly>
+        <input type="text" id="walletAddr" placeholder="Enter Wallet Address">
+        <input type="file" id="buyReceipt">
+        <button class="confirm" onclick="sendBuy()">Send</button>
+      </div>
+    </div>
+
+    <!-- Sell -->
+    <div class="card">
+      <h3>Sell Crypto</h3>
+      <select id="sellCoin" onchange="updateSellWallet()">
+        <option value="BTC">BTC</option>
+        <option value="ETH">ETH</option>
+      </select>
+      <select id="sellNetwork">
+        <option value="ERC20">ERC20</option>
+        <option value="TRC20">TRC20</option>
+        <option value="BEP20">BEP20</option>
+      </select>
+      <button class="confirm" onclick="showSellConfirm()">Confirm</button>
+      <div id="sellConfirm" style="display:none;">
+        <p>KPay Info:</p>
+        <input type="text" placeholder="Name" id="sellKpayName">
+        <input type="text" placeholder="Phone Number" id="sellKpayPhone">
+        <input type="text" id="sellWalletAddr" readonly>
+        <input type="file" id="sellReceipt">
+        <button class="confirm" onclick="sendSell()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assets Page -->
+  <div id="assets" class="page">
+    <div class="card">
+      <h2>Profile</h2>
+      <p>Email: <span id="userEmail"></span></p>
+      <p>Name: <span id="userName"></span></p>
+      <p>User ID: <span id="userID"></span></p>
+      <button class="confirm" onclick="logout()">Logout</button>
+    </div>
+    <div class="card">
+      <h3>Transaction Records</h3>
+      <table id="recordTable">
+        <thead><tr>
+          <th>Type</th><th>Coin</th><th>Network</th><th>Amount</th><th>Status</th><th>Time</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div id="receiptModal">
+  <div class="modal-content">
+    <p id="receiptText"></p>
+    <button onclick="closeReceipt()">Close</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button onclick="showPage('home')">Home</button>
+  <button onclick="showPage('market')">Market</button>
+  <button onclick="showPage('assets')">Assets</button>
+</nav>
+
+<script>
+let users = JSON.parse(localStorage.getItem('users')||'[]');
+let currentUser = JSON.parse(localStorage.getItem('currentUser')||'null');
+
+function showLogin(){ document.getElementById('loginForm').style.display='block'; document.getElementById('signupForm').style.display='none';}
+function showSignup(){ document.getElementById('loginForm').style.display='none'; document.getElementById('signupForm').style.display='block';}
+
+function signup(){
+  const name=document.getElementById('signupName').value;
+  const email=document.getElementById('signupEmail').value;
+  const pass=document.getElementById('signupPassword').value;
+  const pass2=document.getElementById('signupPasswordConfirm').value;
+  if(!name||!email||!pass||!pass2){ alert('Fill all fields'); return;}
+  if(pass!==pass2){ alert('Passwords do not match'); return;}
+  if(users.find(u=>u.email===email)){ alert('Email exists'); return;}
+  const userID = 'U'+Date.now();
+  const serverID = 'S'+Math.floor(Math.random()*100000);
+  const user={name,email,pass,userID,serverID,transactions:[]};
+  users.push(user);
+  localStorage.setItem('users', JSON.stringify(users));
+  alert(`Account created! Your ID: ${userID}`);
+  loginWith(email, pass);
+}
+
+function login(){ 
+  const email=document.getElementById('loginEmail').value;
+  const pass=document.getElementById('loginPassword').value;
+  loginWith(email, pass);
+}
+
+function loginWith(email, pass){
+  const user=users.find(u=>u.email===email && u.pass===pass);
+  if(!user){ alert('Account not found'); return;}
+  currentUser=user;
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  showPage('home');
+  document.querySelector('.bottom-nav').style.display='flex';
+  displayProfile();
+}
+
+function logout(){
+  localStorage.removeItem('currentUser');
+  currentUser=null;
+  document.querySelector('.bottom-nav').style.display='none';
+  showPage('loginPage');
+}
+
+// Navigation
+function showPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById(page).style.display='block';
+  if(page==='assets') updateTransactionTable();
+  if(page==='market') loadMarket();
+}
+
+// Profile
+function displayProfile(){
+  document.getElementById('userEmail').innerText=currentUser.email;
+  document.getElementById('userName').innerText=currentUser.name;
+  document.getElementById('userID').innerText=currentUser.userID;
+}
+
+// Wallet & Support
+function openWallet(url){ window.open(url,'_blank');}
+function openSupport(){ window.open('https://t.me/Apex_56','_blank');}
+
+// Market
+async function loadMarket(){
+  const marketBody=document.getElementById('marketBody');
+  marketBody.innerHTML='Loading...';
+  try{
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether&vs_currencies=usd');
+    const data = await res.json();
+    const usdToMmk = 2100;
+    marketBody.innerHTML='';
+    ['bitcoin','ethereum','tether'].forEach(c=>{
+      const priceMMK = data[c].usd*usdToMmk;
+      marketBody.innerHTML += `<tr><td>${c.toUpperCase()}</td><td>${priceMMK.toLocaleString()}</td></tr>`;
+    });
+  }catch(e){ marketBody.innerHTML='Error fetching market';}
+}
+
+// ---------------- Buy / Sell -----------------
+function showBuyConfirm(){ document.getElementById('buyConfirm').style.display='block'; }
+function showSellConfirm(){ 
+  document.getElementById('sellConfirm').style.display='block'; 
+  updateSellWallet();
+}
+
+function updateSellWallet(){
+  const coin=document.getElementById('sellCoin').value;
+  const addr = coin==='BTC'? 'bc1pzypw8zjl6nhwgfqr6ah85knzmlzd2jwlwxd77lsjjfejv5lqx5dqaqj93l' : '0x5ae39C4cc0280386B7126a5926C35fF9C43a75Ae';
+  document.getElementById('sellWalletAddr').value = addr;
+}
+
+// ---------------- Transactions -----------------
+function addTransaction(tx){
+  currentUser.transactions.push(tx);
+  users = users.map(u=>u.email===currentUser.email?currentUser:u);
+  localStorage.setItem('users', JSON.stringify(users));
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+}
+
+function sendBuy(){
+  const coin=document.getElementById('buyCoin').value;
+  const network=document.getElementById('buyNetwork').value;
+  const amount=document.getElementById('buyAmount').value;
+  const wallet=document.getElementById('walletAddr').value;
+  if(!amount||!wallet){ alert('Fill all fields'); return;}
+  addTransaction({type:'Buy',coin,network,amount,wallet,time:Date.now(),status:'Pending'});
+  alert('Buy transaction added, pending 30 minutes');
+  document.getElementById('buyConfirm').style.display='none';
+}
+
+function sendSell(){
+  const coin=document.getElementById('sellCoin').value;
+  const network=document.getElementById('sellNetwork').value;
+  const wallet=document.getElementById('sellWalletAddr').value;
+  const kname=document.getElementById('sellKpayName').value;
+  const kphone=document.getElementById('sellKpayPhone').value;
+  if(!wallet||!kname||!kphone){ alert('Fill all fields'); return;}
+  addTransaction({type:'Sell',coin,network,amount:'--',wallet,time:Date.now(),status:'Pending',kpayName:kname,kpayPhone:kphone});
+  document.getElementById('sellConfirm').style.display='none';
+}
+
+// ---------------- Transaction Table & Receipt -----------------
+function updateTransactionTable(){
+  const tbody=document.querySelector('#recordTable tbody');
+  tbody.innerHTML='';
+  currentUser.transactions.forEach((t,i)=>{
+    tbody.innerHTML += `<tr onclick="showReceipt(${i})">
+      <td>${t.type}</td><td>${t.coin||''}</td><td>${t.network||''}</td>
+      <td>${t.amount||''}</td><td>${t.status}</td>
+      <td>${new Date(t.time).toLocaleString()}</td>
+    </tr>`;
+  });
+}
+
+function showReceipt(idx){
+  const t=currentUser.transactions[idx];
+  document.getElementById('receiptText').innerText=
+    `Type: ${t.type}\nCoin: ${t.coin||''}\nNetwork: ${t.network||''}\nAmount: ${t.amount||''}\nWallet: ${t.wallet}\nKPay Name: ${t.kpayName||''}\nKPay Phone: ${t.kpayPhone||''}\nTime: ${new Date(t.time).toLocaleString()}\nStatus: ${t.status}`;
+  document.getElementById('receiptModal').style.display='flex';
+}
+function closeReceipt(){ document.getElementById('receiptModal').style.display='none';}
+
+// ---------------- Auto Login -----------------
+if(currentUser){ loginWith(currentUser.email,currentUser.pass); showPage('home'); }
+</script>
+</body>
+</html>
